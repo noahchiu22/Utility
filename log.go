@@ -7,11 +7,7 @@ import (
 	"time"
 )
 
-func init() {
-	log.SetPrefix("【Debug】")
-	log.SetFlags(log.Ldate | log.Ltime)
-}
-
+// log by datetime and save in the same directory
 func Log(information string, info ...interface{}) {
 	t := time.Now().Local().Format("2006-01-02")
 

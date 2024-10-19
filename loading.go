@@ -1,25 +1,41 @@
 package util
 
-func LoadingBar() {
-	// ------------------------------------讀取條------------------------------------
-	// db select all
+import (
+	"fmt"
+	"os"
+	"os/exec"
 
-	// countNow = count
-	// for {
-	// fmt.Println(countNow, "/", count, int(float64(count-countNow)/float64(count)*100), "%")
-	// for i := 0; i < 100; i++ {
-	// 	if i < int(float64(count-countNow)/float64(count)*100) {
-	// 		print("*")
-	// 		continue
-	// 	}
+	"gorm.io/gorm"
+)
 
-	// 	print("-")
-	// }
+// loading bar when sql doing some job
+func LoadingBar(execQuery *gorm.DB) {
+	totalCount, tempCount := int64(0), int64(0)
 
-	// db select all
+	execQuery.Count(&totalCount)
 
-	// cmd := exec.Command("cmd", "/c", "cls")
-	// cmd.Stdout = os.Stdout
-	// cmd.Run()
-	// }
+	for {
+		// task proccess percentage
+		percentage := float64(totalCount-tempCount) / float64(totalCount) * 100
+
+		// print (present num / total num) and percentage
+		fmt.Println(tempCount, "/", totalCount, percentage, "%")
+
+		// print the loading bar
+		for i := 0.0; i < 100; i++ {
+			if i < percentage {
+				print("*")
+				continue
+			}
+
+			print("-")
+		}
+
+		execQuery.Count(&tempCount)
+
+		// refresh the cmd
+		cmd := exec.Command("cmd", "/c", "cls")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	}
 }
