@@ -15,36 +15,36 @@ func IntToDigits[T string | int | int64](num T, digits int) (numStr string) {
 	return
 }
 
-// 將結構體內的指定的field name轉成指定的型態陣列(支援string, int, float, bool)
-// 指定結構體跟回傳陣列型態
+// Convert a specified field name in a struct to a slice of a specified type (supports string, int, float, bool)
+// Specify the struct type and the return slice type
 func FieldsToSlice[structT comparable, T comparable](
 	structSlice []structT, fieldName string) (outSlice []T) {
-	// 跑過結構體的陣列
+	// Iterate through the slice of structs
 	for _, item := range structSlice {
 		var outValue T
-		// 結構體的reflect value, 要用來判斷擷取資料的
+		// Reflect value of the struct, used to access field data
 		v := reflect.ValueOf(item)
-		// outValue的reflect value, 要用來寫入資料的
+		// Reflect value of outValue, used to set the data
 		ov := reflect.ValueOf(&outValue).Elem()
 
-		// 如果outValue的reflect value不能寫入就跳過
+		// Skip if the reflect value of outValue cannot be set
 		if !ov.CanSet() {
 			continue
 		}
-		// 取得該結構體的某個field資料 by field name
+		// Get the value of the specified field by field name
 		fieldValue := v.FieldByName(fieldName)
-		// 查無欄位名稱
+		// Field name does not exist
 		if !fieldValue.IsValid() {
-			fmt.Printf("filed name %s doesn't exist\n", fieldName)
+			fmt.Printf("field name %s doesn't exist\n", fieldName)
 			return
 		}
-		// 該欄位的型態跟指定的陣列型態不同
+		// Field type is different from the specified slice type
 		if fieldValue.Kind() != ov.Kind() {
-			fmt.Printf("Different kind by %s(%s) and T(%s)\n",
+			fmt.Printf("Different kind for %s(%s) and T(%s)\n",
 				fieldName, fieldValue.Kind(), ov.Kind())
 			return
 		}
-		// 判斷型態，依照不同型態寫入outValue
+		// Determine the type and assign the value to outValue accordingly
 		switch fieldValue.Kind() {
 		case reflect.String:
 			ov.SetString(fieldValue.String())
@@ -56,7 +56,7 @@ func FieldsToSlice[structT comparable, T comparable](
 			ov.SetBool(fieldValue.Bool())
 		}
 
-		// 將outValue append到要回傳的陣列裡
+		// Append outValue to the return slice
 		outSlice = append(outSlice, outValue)
 	}
 	return
