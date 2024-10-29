@@ -57,7 +57,11 @@ func FindExtremum(data []float64) (max, min float64) {
 
 // 字串計算(字串+數字、字串+字串)(減法有問題)
 // 輸出會依照stringNum的位元數來輸出，多出來的就不輸出
-func StringCalculate(stringNum string, inputNum interface{}) (outputNum string) {
+// 字串計算(字串+數字、字串+字串)
+// 輸出會依照stringNum的位元數來輸出，多出來的就不輸出
+func StringCalculate(stringNum string, inputNum any) (outputNum string) {
+	fmt.Printf("stringNum: %v, inputNum: %v\n", stringNum, inputNum)
+
 	num := 0
 
 	// 用於字串變數字
@@ -72,8 +76,14 @@ func StringCalculate(stringNum string, inputNum interface{}) (outputNum string) 
 	for i := len(stringNum) - 1; i >= 0; i-- {
 		// 數字加進位，加完後進位要清空(第一次的carry就是要加的數字)
 		digitNum, _ := strconv.Atoi(string(stringNum[i]))
-		digitNum += carry
-		carry = 0
+
+		if carry < 0 {
+			digitNum += (carry % 10)
+			carry /= 10
+		} else {
+			digitNum += carry
+			carry = 0
+		}
 		// 超過9要進位
 		if digitNum > 9 {
 			carry = (digitNum) / 10
@@ -82,7 +92,7 @@ func StringCalculate(stringNum string, inputNum interface{}) (outputNum string) 
 		// 小於0要退位(-的num)
 		if digitNum < 0 {
 			digitNum = 10 + digitNum
-			carry = -1
+			carry += -1
 		}
 		// 由右到左拼起來
 		outputNum = fmt.Sprint(digitNum) + outputNum
