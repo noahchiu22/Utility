@@ -156,3 +156,39 @@ func AddSerial(prefix, initNumStr, serialStr string, addend int) (output string)
 	}
 	return
 }
+
+// 累加各種型別的數字
+func Calculate[T int | int64 | float64](nums ...any) (outNum T) {
+	totalNum := 0.0
+
+	for _, num := range nums {
+		fmt.Printf("num: %T, %v\n", num, num)
+		switch tempNum := num.(type) {
+		case string:
+			convertNum, err := strconv.ParseFloat(tempNum, 64)
+			if err != nil {
+				continue
+			}
+
+			totalNum += convertNum
+		case int:
+			totalNum += float64(tempNum)
+		case int8:
+			totalNum += float64(tempNum)
+		case int16:
+			totalNum += float64(tempNum)
+		case int32:
+			totalNum += float64(tempNum)
+		case int64:
+			totalNum += float64(tempNum)
+		case float32:
+			totalNum += float64(tempNum)
+		case float64:
+			totalNum += tempNum
+		}
+	}
+
+	outNum = T(totalNum)
+
+	return
+}
