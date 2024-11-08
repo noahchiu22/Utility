@@ -51,6 +51,24 @@ func FieldsToSlice[structT comparable, T comparable](
 ## Create excel with field tag
 ```go
 // Using any excel tag as title in the struct to create excel
+//
+//	type example struct {
+//		fieldName  any  `excel:"your title"`
+//	}
+//
+// Excel will be:
+//
+//	---------------
+//	|  title  | ...
+//	|---------+----
+//	| data[i] | ...
+//	|---------+----
+//	|data[i+1]| ...
+//	|---------+----
+//	|data[i+2]| ...
+//	|---------+----
+//	|    :    | ...
+//
 // And it will automatically fit column width by the cell content
 func CreateExcel[S comparable](data []S, path, filename string) (err error) {
 	f := excelize.NewFile()
