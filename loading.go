@@ -19,7 +19,7 @@ func LoadingBar(execQuery *gorm.DB) {
 		percentage := float64(totalCount-tempCount) / float64(totalCount) * 100
 
 		// print (present num / total num) and percentage
-		fmt.Println(tempCount, "/", totalCount, percentage, "%")
+		fmt.Println(totalCount-tempCount, "/", totalCount, percentage, "%")
 
 		// print the loading bar
 		for i := 0.0; i < 100; i++ {
