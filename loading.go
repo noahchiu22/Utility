@@ -1,6 +1,7 @@
 package util
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -80,14 +81,18 @@ func (b *Bar) Init() {
 					}
 				}
 
-				// print (current num / total num) and percentage
-				roundNum := math.Round(percentage*math.Pow10(b.Precision)) / math.Pow10(b.Precision)
+				roundPercentage := math.Round(percentage*math.Pow10(b.Precision)) / math.Pow10(b.Precision)
 				remaining := -1.0
 				if speed > 0 {
 					remaining = (max - current) / speed
 				}
-				fmt.Printf(" | %.*f%% (%.0f/%.0f, %.1fit/s) - %.1fs", b.Precision, roundNum, current, max, speed, remaining)
+				fmt.Printf(" | %.*f%% (%.0f/%.0f, %.1fit/s) - %.1fs", b.Precision, roundPercentage, current, max, speed, remaining)
 				fmt.Println()
+
+				if current >= max {
+					b.Stop()
+					continue
+				}
 
 				time.Sleep(time.Duration(1/b.FPS) * time.Second)
 				clearScreen()
@@ -96,32 +101,107 @@ func (b *Bar) Init() {
 	}()
 }
 
-func (b *Bar) Update(current float64) {
+func (b *Bar) Add(load float64) error {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
+
+	if b.StopChan == nil {
+		return errors.New("bar has not been initialized")
+	}
 
 	now := time.Now()
 	timeDiff := now.Sub(b.lastUpdateTime).Seconds()
 
-	b.Current += current
+	b.Current += load
 
 	if timeDiff > 0 {
-		b.Speed = current / timeDiff
+		b.Speed = load / timeDiff
 	}
 
 	b.lastUpdateTime = now
+
+	return nil
 }
 
-func (b *Bar) Stop() {
+func (b *Bar) Refresh(current float64) error {
+	b.mutex.Lock()
+
+	defer b.mutex.Unlock()
+
+	if b.StopChan == nil {
+		return errors.New("bar has not been initialized")
+	}
+
+	now := time.Now()
+	timeDiff := now.Sub(b.lastUpdateTime).Seconds()
+	if timeDiff > 0 {
+		b.Speed = (current - b.Current) / timeDiff
+	}
+
+	b.Current = current
+
+	b.lastUpdateTime = now
+
+	return nil
+}
+
+func (b *Bar) Reset() error {
+	b.mutex.Lock()
+
+	defer b.mutex.Unlock()
+
+	if b.StopChan == nil {
+		return errors.New("bar has not been initialized")
+	}
+
+	b.Current = 0
+	b.Speed = 0
+
+	return nil
+}
+
+func (b *Bar) AutoRefresh(fn func() float64, delay time.Duration) {
+	// 不需要在這裡上鎖，因為我們要啟動一個獨立的 goroutine
+	go func() {
+		for {
+			select {
+			case <-b.StopChan:
+				return
+			default:
+				current := fn()
+				b.Refresh(current)
+			}
+
+			time.Sleep(delay)
+		}
+	}()
+	<-b.StopChan
+}
+
+func (b *Bar) Brange() bool {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
+	return b.Current < b.Max
+}
+
+func (b *Bar) Stop() error {
+	b.mutex.Lock()
+
+	defer b.mutex.Unlock()
+
+	if b.StopChan == nil {
+		return errors.New("bar has not been initialized")
+	}
+
 	if b.stopped {
-		return
+		return nil
 	}
 
 	b.stopped = true
 	close(b.StopChan)
+
+	return nil
 }
 
 func clearScreen() {
